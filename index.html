@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Posture Recognition</title>
+
+    <!-- p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/p5.min.js"></script>
+
+    <!-- ml5.js - PoseNet compatible version -->
+    <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <h1>Posture Recognition</h1>
+
+    <div id="canvas-container"></div>
+
+    <p id="posture-status">Waiting for posture detection...</p>
+
+    <!-- JavaScript files -->
+    <script src="js/pose.js"></script>
+    <script src="js/posture.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

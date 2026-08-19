@@ -25,3 +25,21 @@ Posture-Recognition/
 ├── index.html
 ├── .gitignore
 └── README.md
+
+
+## 📸 Screenshots
+
+![Posture Recognition Interface](assets/Screenshot%202026-08-20%20034543.png)
+
+
+## 🔮 Future Improvements
+
+- Improve posture detection accuracy
+- Add more posture categories
+- Add posture history and analytics
+- Improve UI/UX
+- Add personalized posture recommendations
+
+## 📄 License
+
+This project is created for educational and project-development purposes.

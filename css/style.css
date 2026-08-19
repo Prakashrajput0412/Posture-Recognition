@@ -1,0 +1,49 @@
+/* Page layout */
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f4f4f4;
+}
+
+/* Project heading */
+h1 {
+    margin-bottom: 20px;
+}
+
+/* Camera / canvas area */
+#canvas-container {
+    width: 640px;
+    max-width: 100%;
+    margin: 0 auto 20px;
+    border: 2px solid #333;
+    background-color: #000;
+}
+
+/* Posture status */
+#posture-status {
+    margin: 15px auto;
+    padding: 12px 20px;
+    max-width: 600px;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+/* Responsive layout */
+@media (max-width: 700px) {
+    body {
+        padding: 10px;
+    }
+
+    #canvas-container {
+        width: 100%;
+    }
+
+    #posture-status {
+        font-size: 16px;
+    }
+}

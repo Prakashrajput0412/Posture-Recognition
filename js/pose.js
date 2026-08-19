@@ -5,6 +5,7 @@ let poseNet;
 // Stores the latest pose detection results
 let poses = [];
 
+
 /**
  * Initializes webcam capture and PoseNet.
  */
@@ -19,6 +20,7 @@ function initializePoseDetection() {
     poseNet.on("pose", handlePoseResults);
 }
 
+
 /**
  * Called when the PoseNet model is loaded.
  */
@@ -26,12 +28,10 @@ function handleModelReady() {
     console.log("PoseNet model loaded successfully.");
 }
 
+
 /**
  * Receives pose detection results.
- * @param {Array} results - Detected pose results.
  */
 function handlePoseResults(results) {
     poses = results;
-
-    console.log("Pose results received:", results.length);
 }

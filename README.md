@@ -56,8 +56,7 @@ The objective of this project is to demonstrate how computer vision and AI-based
 
 ### Posture Recognition Interface
 
-![Posture Recognition Interface](assets/Screenshot%202026-08-20%20034543.png)
-
+<img src="./assets/Screenshot 2026-08-20 034543.png" width="1920" alt="Posture Recognition Interface">
 
 ## 🔮 Future Improvements
 

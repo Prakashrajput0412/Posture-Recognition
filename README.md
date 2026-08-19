@@ -25,6 +25,7 @@ Posture-Recognition/
 ├── index.html
 ├── .gitignore
 └── README.md
+```
 
 
 ## 📸 Screenshots

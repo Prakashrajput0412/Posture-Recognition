@@ -1,10 +1,8 @@
 /**
- * Analyzes the detected pose and returns a posture result.
- *
- * @param {Object} pose - A single detected pose.
- * @returns {Object} Posture analysis result.
+ * Analyzes the detected pose.
  */
 function analyzePosture(pose) {
+
     if (!pose || !pose.keypoints) {
         return createPostureResult("No pose detected", false);
     }
@@ -19,43 +17,36 @@ function analyzePosture(pose) {
 
 
 /**
- * Finds a specific body keypoint by its name.
- *
- * @param {Array} keypoints - PoseNet keypoints.
- * @param {string} name - Name of the required keypoint.
- * @returns {Object|null} Matching keypoint or null.
+ * Finds a keypoint by name.
  */
 function getKeypoint(keypoints, name) {
+
     if (!Array.isArray(keypoints)) {
         return null;
     }
 
     const keypoint = keypoints.find(
-        (point) => point.part === name
+        point => point.part === name
     );
 
-    if (!keypoint || !keypoint.position) {
-        return null;
-    }
-
-    return keypoint;
+    return keypoint || null;
 }
 
 
 /**
- * Checks whether a keypoint has enough confidence
- * to be used for posture analysis.
- *
- * @param {Object} keypoint - PoseNet keypoint.
- * @param {number} minimumConfidence - Minimum required confidence.
- * @returns {boolean} True if the keypoint is reliable.
+ * Checks keypoint reliability.
  */
-function isReliableKeypoint(keypoint, minimumConfidence = 0.5) {
-    if (!keypoint) {
+function isReliableKeypoint(
+    keypoint,
+    minimumConfidence = 0.15
+) {
+
+    if (!keypoint || !keypoint.position) {
         return false;
     }
 
-    const score = keypoint.score ?? keypoint.confidence;
+    const score =
+        keypoint.score ?? keypoint.confidence;
 
     if (typeof score !== "number") {
         return true;
@@ -66,126 +57,252 @@ function isReliableKeypoint(keypoint, minimumConfidence = 0.5) {
 
 
 /**
- * Calculates the midpoint between two points.
- *
- * @param {Object} firstPoint - First point.
- * @param {Object} secondPoint - Second point.
- * @returns {Object} Midpoint coordinates.
+ * Calculates vertical difference.
  */
-function calculateMidpoint(firstPoint, secondPoint) {
-    return {
-        x: (firstPoint.x + secondPoint.x) / 2,
-        y: (firstPoint.y + secondPoint.y) / 2
-    };
+function calculateVerticalDifference(
+    firstPoint,
+    secondPoint
+) {
+
+    return Math.abs(
+        firstPoint.y - secondPoint.y
+    );
 }
 
 
 /**
- * Calculates the horizontal distance between two points.
+ * Calculates head tilt angle.
  *
- * @param {Object} firstPoint - First point.
- * @param {Object} secondPoint - Second point.
- * @returns {number} Horizontal distance.
+ * 0 degrees = horizontal eyes
+ * Larger angle = head tilted
  */
-function calculateHorizontalDistance(firstPoint, secondPoint) {
-    return Math.abs(firstPoint.x - secondPoint.x);
+function calculateHeadTilt(firstEye, secondEye) {
+
+    const deltaX =
+        secondEye.x - firstEye.x;
+
+    const deltaY =
+        secondEye.y - firstEye.y;
+
+    if (deltaX === 0) {
+        return 90;
+    }
+
+    let angle =
+        Math.atan2(deltaY, deltaX) *
+        (180 / Math.PI);
+
+    /*
+     * Convert angles such as 175 degrees
+     * into 5 degrees.
+     */
+    angle = Math.abs(angle);
+
+    if (angle > 90) {
+        angle = 180 - angle;
+    }
+
+    return angle;
 }
 
 
 /**
- * Calculates the vertical difference between two points.
- *
- * @param {Object} firstPoint - First point.
- * @param {Object} secondPoint - Second point.
- * @returns {number} Vertical difference.
- */
-function calculateVerticalDifference(firstPoint, secondPoint) {
-    return Math.abs(firstPoint.y - secondPoint.y);
-}
-
-
-/**
- * Calculates posture information from pose keypoints.
- *
- * @param {Object} pose - A single detected pose.
- * @returns {Object} Calculated posture information.
+ * Calculates posture.
  */
 function calculatePosture(pose) {
+
     const keypoints = pose.keypoints;
 
-    const nose = getKeypoint(keypoints, "nose");
-    const leftShoulder = getKeypoint(keypoints, "leftShoulder");
-    const rightShoulder = getKeypoint(keypoints, "rightShoulder");
 
+    /*
+     * HEAD
+     */
+    const leftEye =
+        getKeypoint(keypoints, "leftEye");
+
+    const rightEye =
+        getKeypoint(keypoints, "rightEye");
+
+    const nose =
+        getKeypoint(keypoints, "nose");
+
+
+    /*
+     * SHOULDERS
+     */
+    const leftShoulder =
+        getKeypoint(
+            keypoints,
+            "leftShoulder"
+        );
+
+    const rightShoulder =
+        getKeypoint(
+            keypoints,
+            "rightShoulder"
+        );
+
+
+    /*
+     * Check required keypoints.
+     */
     const requiredKeypoints = [
+        leftEye,
+        rightEye,
         nose,
         leftShoulder,
         rightShoulder
     ];
 
-    const hasReliableKeypoints = requiredKeypoints.every(
-        (keypoint) => isReliableKeypoint(keypoint)
-    );
 
-    if (!hasReliableKeypoints) {
+    const valid =
+        requiredKeypoints.every(
+            keypoint =>
+                isReliableKeypoint(
+                    keypoint,
+                    0.15
+                )
+        );
+
+
+    if (!valid) {
+
         return {
             label: "Insufficient pose data",
             isGood: false
         };
     }
 
-    const shoulderMidpoint = calculateMidpoint(
-        leftShoulder.position,
-        rightShoulder.position
-    );
-
-    const headOffset = calculateHorizontalDistance(
-        nose.position,
-        shoulderMidpoint
-    );
-
-    const shoulderTilt = calculateVerticalDifference(
-        leftShoulder.position,
-        rightShoulder.position
-    );
 
     /*
-     * These thresholds are initial values.
-     * They should be calibrated after testing the application
-     * with different users and camera positions.
+     * =========================================
+     * HEAD TILT
+     * =========================================
      */
-    const MAX_HEAD_OFFSET = 80;
-    const MAX_SHOULDER_TILT = 30;
 
-    const headAlignmentIsGood =
-        headOffset <= MAX_HEAD_OFFSET;
+    const headTilt =
+        calculateHeadTilt(
+            leftEye.position,
+            rightEye.position
+        );
 
-    const shoulderAlignmentIsGood =
-        shoulderTilt <= MAX_SHOULDER_TILT;
 
+    /*
+     * =========================================
+     * SHOULDER TILT
+     * =========================================
+     */
+
+    const shoulderDifference =
+        calculateVerticalDifference(
+            leftShoulder.position,
+            rightShoulder.position
+        );
+
+
+    /*
+     * Calculate shoulder width so that
+     * the threshold works at different
+     * distances from the camera.
+     */
+    const shoulderWidth =
+        Math.abs(
+            leftShoulder.position.x -
+            rightShoulder.position.x
+        );
+
+
+    let normalizedShoulderTilt = 0;
+
+    if (shoulderWidth > 0) {
+
+        normalizedShoulderTilt =
+            shoulderDifference /
+            shoulderWidth;
+    }
+
+
+    /*
+     * =========================================
+     * THRESHOLDS
+     * =========================================
+     */
+
+    const MAX_HEAD_TILT = 18;
+
+    const MAX_SHOULDER_TILT = 0.25;
+
+
+    /*
+     * =========================================
+     * CONDITIONS
+     * =========================================
+     */
+
+    const headIsStraight =
+        headTilt <= MAX_HEAD_TILT;
+
+
+    const shouldersAreStraight =
+        normalizedShoulderTilt <=
+        MAX_SHOULDER_TILT;
+
+
+    /*
+     * Final decision.
+     */
     const isGood =
-        headAlignmentIsGood &&
-        shoulderAlignmentIsGood;
+        headIsStraight &&
+        shouldersAreStraight;
+
+
+    /*
+     * Debug information.
+     * Check browser console if needed.
+     */
+    console.log(
+        "Posture:",
+        isGood
+            ? "GOOD"
+            : "POOR",
+
+        "| Head Tilt:",
+        headTilt.toFixed(2),
+
+        "| Shoulder Tilt:",
+        normalizedShoulderTilt.toFixed(2)
+    );
+
 
     return {
-        label: isGood ? "Good Posture" : "Poor Posture",
+
+        label:
+            isGood
+                ? "Good Posture"
+                : "Poor Posture",
+
         isGood: isGood,
+
         metrics: {
-            headOffset: headOffset,
-            shoulderTilt: shoulderTilt
+
+            headTilt:
+                headTilt,
+
+            shoulderTilt:
+                normalizedShoulderTilt
         }
     };
 }
 
 
 /**
- * Creates a standardized posture result.
- *
- * @param {string} label - Posture label.
- * @param {boolean} isGood - Whether posture is considered good.
- * @returns {Object} Standardized posture result.
+ * Creates standardized posture result.
  */
-function createPostureResult(label, isGood) {
+function createPostureResult(
+    label,
+    isGood
+) {
+
     return {
         label: label,
         isGood: isGood

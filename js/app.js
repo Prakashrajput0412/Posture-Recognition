@@ -11,6 +11,7 @@ function initializeApplication() {
  */
 function setup() {
     initializeApplication();
+    setupVisualization();
 }
 
 
@@ -18,6 +19,9 @@ function setup() {
  * p5.js draw function.
  */
 function draw() {
+    // Draw webcam and pose visualization
+    drawVisualization();
+
     if (!poses || poses.length === 0) {
         return;
     }
